@@ -4,17 +4,12 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/Protoculos/banking/service"
 	"github.com/gorilla/mux"
 )
-
-type Customer struct {
-	Name    string `json:"name,omitempty" xml:"name,omitempty"`
-	City    string `json:"city,omitempty" xml:"city,omitempty"`
-	Zipcode string `json:"zipcode,omitempty" xml:"zipcode,omitempty"`
-}
 
 type CustomerHandlers struct {
 	service service.CustomerService
@@ -42,14 +37,20 @@ func (ch *CustomerHandlers) getCustomer(w http.ResponseWriter, r *http.Request) 
 
 	customer, err := ch.service.GetCustomer(id)
 	if err != nil {
-		w.WriteHeader(err.Code)
-		fmt.Fprintf(w, err.Message)
+		writeResponse(w, err.Code, err.AsMessage())
 	} else {
-		w.Header().Add("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(customer)
+		writeResponse(w, http.StatusOK, customer)
 	}
 }
 
 func createCustomer(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Post request received")
+}
+
+func writeResponse(w http.ResponseWriter, code int, data interface{}) {
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(code)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Panic(err)
+	}
 }
